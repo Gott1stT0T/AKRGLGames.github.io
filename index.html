@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>～博士的肉鸽Bingo游戏～</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <!-- 配置Tailwind自定义主题 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#722ED1', // 明日方舟紫
+                        secondary: '#36D399', // 绿色选中色
+                        neutral: '#F5F7FA',
+                        dark: '#1D2129'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'PingFang SC', 'Microsoft YaHei', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .bingo-cell {
+                @apply w-full h-full flex items-center justify-center p-2 text-center cursor-pointer transition-all duration-300 
+                       border-2 border-gray-300 rounded-lg hover:shadow-md bg-white;
+                word-break: break-all; /* 长文本自动换行 */
+                font-size: clamp(0.7rem, 1.5vw, 0.9rem); /* 响应式字体大小 */
+            }
+            .bingo-cell.selected {
+                @apply bg-secondary text-white border-secondary;
+            }
+            .bingo-grid {
+                @apply grid grid-cols-5 gap-3 w-full max-w-2xl mx-auto;
+                aspect-ratio: 1/1; /* 保持正方形网格 */
+            }
+            .btn-shake {
+                @apply bg-primary hover:bg-primary/90 text-white font-bold py-3 px-8 rounded-lg 
+                       transition-all duration-300 transform hover:scale-105 active:scale-95
+                       flex items-center gap-2 shadow-lg;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-4 font-sans">
+    <div class="text-center mb-6 md:mb-8">
+        <h1 class="text-[clamp(1.8rem,5vw,2.5rem)] font-bold text-dark mb-2">～博士的肉鸽Bingo游戏～</h1>
+        <p class="text-gray-600 text-base md:text-lg">尽可能连成一条线吧～</p>
+    </div>
+    
+    <!-- Bingo游戏区域 -->
+    <div class="w-full max-w-4xl bg-white rounded-xl shadow-xl p-4 md:p-6 lg:p-8 mb-8">
+        <!-- 游戏网格 -->
+        <div class="bingo-grid mb-6 md:mb-8">
+            <!-- 格子将通过JavaScript动态生成 -->
+        </div>
+        
+        <!-- 重摇按钮 -->
+        <div class="flex justify-center">
+            <button id="shakeBtn" class="btn-shake">
+                <i class="fa fa-refresh"></i>
+                <span>ReRoll</span>
+            </button>
+        </div>
+    </div>
+    
+    <footer class="text-gray-500 text-sm mt-auto">
+        <p>从101个肉鸽挑战词条中随机选择25个不重复词条 | 点击格子标记完成状态</p>
+    </footer>
+
+    <script>
+        // 101个明日方舟肉鸽挑战词条库
+        const wordBank = [
+            "拜托了，另一个我！ 场上同时存在3对异格干员。",
+            "霴斚韙纔篳 将5个代号首字母为DJWCB的干员排成一行或一列。",
+            "王女遇刺，封锁全场！ 使1名满血干员被来自“巴别塔”活动的敌人秒杀。",
+            "诡秘之主 在一整层中不进行战斗。",
+            "让我们说中文 仅携带技能名为符号，字母与数字的技能通过非一层关卡。",
+            "飒飒给有，飒飒给有，心脏飒飒给有！ 在编队中所有干员代号中均存在斯、卡或蒂的情况下通过2关。",
+            "很脆的刺 使一个年代之刺或饮泣之刺的防御力小于250。",
+            "我有自闭症！ 在场上至少存在6名干员，且所有干员周围8格不存在我方单位的情况下通过3关。",
+            "载具杀手 击杀一个满载的车类敌人。",
+            "对……对吗？哦对的对的！哦不对不对！ 使四个开启的技能不发挥效果。",
+            "鼠标单核，摆完挂机，简单好抄 仅携带自动开启技能，通过1个三层或以上关卡。",
+            "追忆似水年华 使一个年代持续至少10步。",
+            "穿过锁孔的风 在编队中所有干员均为莱塔尼亚/巴别塔及罗德岛/拉特兰（可以包含能天使）的情况下通过紧急授课/双王记/圣城。",
+            "你是奶妈吗？我觉得我是！ 在不编入医疗干员的情况下收掉奶箱。",
+            "血脉相连 使至少3名干员吃到同一阵营buff。",
+            "高坚果，小子！ 使一名干员阻挡数到达10。",
+            "思如泉涌 在同一节点获得至少4个非构想思绪。",
+            "真·正当交易 一次性购买全部商品（不包括刷新，不可抢劫）。",
+            "旋转，跳跃，我闭着眼 使一名非处决者分支的干员在一场战斗中面朝四个方式。",
+            "Dr.Octopus 同时获得三个“手”类藏品。",
+            "你相信光吗？ 所有干员均处于年代印痕内通关。",
+            "高下立判 使待部署区两名相邻干员的费用差不小于30。",
+            "雷电将军 编队中仅存在技能名带“电”或使用雷电源石技艺的干员。",
+            "先下先锋……啊？ 按照费用倒序部署干员，通过1个三层及以上关卡。",
+            "博士家今天的饭 在同一关中，使四类不同萨卡兹敌人进入蓝门。",
+            "结束了？ 在场上仍存在敌人时通关。",
+            "畅通无阻 使至少6个干员阻挡数为0。",
+            "一寸长，一寸强 只携带技力消耗不小于45的技能通过一次作战。",
+            "一寸短，一寸险 只携带攻击范围不大于4格的干员通过一次作战。",
+            "益达使用者 思维负荷为0的情况下通过一整层（第一层除外）。",
+            "三，啊不，四相之力 在同一场战斗中造成物理，法术，真实和元素伤害。",
+            "这照片是你吗？ 使用干员击败自己的敌方形态。",
+            "数值膨胀 打出25000以上的红字。",
+            "集群的集群次方分队 在任意时刻，部署位与携带位之和达到20。",
+            "极其有序清场 通过一个三层或以上关卡，期间同一时刻只能有至多一名敌方受伤。",
+            "一把抓住，顷刻炼化！ 生吃一个boss或一层中累计失去50点目标生命。",
+            "伟大的万门之门 累计5名干员被“门”吞噬。",
+            "守门员 通过一个三层或以上关卡，期间所有干员均部署在蓝门或红门周边8格。",
+            "多彩人生 经过所有种类的节点。",
+            "我……我愿意加入…… 在蓝门击杀一名隐藏敌人。",
+            "路不拾遗，夜不闭户 连续5关不击杀年代之刺或饮泣之刺",
+            "终极答案 使思维负担值恰好等于42.",
+            "让我们说中文 仅携带技能名为符号，字母与数字的技能通过非一层关卡。",
+            "王庭盟约 使干员与萨卡兹敌人均未收到彼此伤害的情况下通关一个关卡。",
+            "尤里卡！ 累计直升4名干员（职业队8名）。",
+            "80关环游熔炉 通过所有5层关卡。",
+            "垃圾站站长 同时持有5个不生效的藏品。",
+            "损伤了吗？如损 使一名干员在元素损伤爆发期间回复技力。",
+            "炸弹！ 拥有4个相同的灵感。",
+            "Boss Rush 累计通过两个5层boss。",
+            "我们联合！ 场上同时存在3名联动干员。",
+            "同粥共寄 使4名干员被同一次攻击或技能击杀。",
+            "未来可期 仅携带无模组干员通过三层或以上关卡。",
+            "似是旧时相识 持有至少10个之前肉鸽的藏品",
+            "谜语人 累积获得4个“谜”藏品",
+            "目光清澈 整场游戏不招募卡池“何以为我”后登场的干员(包括当期干员)。",
+            "强迫症狂喜 使场上一名干员的攻击力，防御力或生命上限可以被10整除（不能为0）。",
+            "卡手之王 通过二层及以上关卡，所有干员初始部署费用不小于20。",
+            "犹豫不决 单场游戏累计获得3个不同的支援道具。",
+            "一步到胃 使一名出场3秒以内的敌人进入蓝门。",
+            "忘换技能了 所有干员均携带1技能通过一个非一层关卡。",
+            "低头思故乡 通过一个四层或以上关卡，所有干员均朝向蓝门部署。",
+            "误入奇境 进入思维边界后，结束本次探索并通关一次相同难度的萨米或水月肉鸽。",
+            "赛博方舟2019 编队中同时存在精二银灰小羊能天使。",
+            "双王寄 在两个连续战斗节点分别触发至少一件魔王藏品和国王藏品的效果，次序不限。",
+            "我的王，你，真他妈是个无可救药的混蛋！ 在事件“失落财宝”中选择“我更想饱餐一顿”。",
+            "我是谁我在哪里我在干什么 思绪混乱的情况下通关boss关。",
+            "小鬼当家 全程不手动撤退的情况下，通关时场上无干员存在。",
+            "到家了？ 在一个五层关卡中出现驼兽旅行家。",
+            "每日乳法 使用执旗手在一关中击杀至少5名敌人。",
+            "禁飞区 在同一关中击杀5个浮空或失重敌人",
+            "To fight or not to fight,that is a question. 同一次探索中，获得“希望时代的涂鸦”及“死仇年代的恨意”，并且累计将作战节点变为不期而遇3次，将不期而遇节点变为紧急作战3次。",
+            "御驾亲征 单次探索中，使干员“魔王”累计击杀10种不同的萨卡兹敌人。",
+            "我吃四碗 使四名干员同时处于被吞噬状态。",
+            "六边形战士 拥有每个职业的干员至少2名。",
+            "宇宙万法的源头…… 编队中所有干员法抗均不相同的情况下通关非一层关卡。",
+            "我是来抢钱的，你们要干什么？ 在通过一个关卡后，源石锭比通关之前少至少15。",
+            "粥粥的奇妙冒险 在一关中对敌人造成眩晕，爆炸与推拉。",
+            "火力不足恐惧症 在第五层前指挥等级达到10。",
+            "选择困难症 当前节点的下一步至少有三个选项。",
+            "各位观众朋友们大家好，对面是个小杯 在同一个关卡中，使用阿米娅击败全部精英敌人或击败领袖敌人。",
+            "应行的路，我行尽了 通过一层最多能通过的所有节点（包含纵向通路）。",
+            "绿野仙踪 同时招募锡人，萝莉干员，植物相关干员和动物相关干员。",
+            "最后的大亨 累计获得100源石锭。",
+            "消消乐 使三个相同职业的干员处于一行或一列，然后撤退。",
+            "我知道你很急但你先别急 使一个能够加速的敌人在初始速度被消灭。",
+            "严重偏科 拥有一个职业队内的干员至少10名，同时编队内其他职业的干员总星级不大于9。",
+            "鸟为什么会飞？ 一关内累计使10个敌人浮空。",
+            "彭罗斯阶梯 单次探索中，进入同一关卡3次，其中至少包括一次普通作战和一次紧急作战。",
+            "师傅又被妖怪抓走了 使至少3名精二干员被“门”吞噬。",
+            "砸！瓦卢多！ 时停部署所有干员，持续三关。",
+            "我即是虫群 累计部署50次召唤物",
+            "十三试炼 累计将33%生命值以下的干员血线抬回13次。",
+            "环魂灵熔炉 使用机械相关干员击杀25名敌人。",
+            "刺客信条 仅使用再部署时间30秒以下的干员击杀一名精英或领袖敌人。",
+            "强攻！不计代价！ 全程不治疗干员的情况下通过1-3层/4层/5层。",
+            "我是阿尔法，我是欧米伽 使一名进入第三层前招募的干员在至少三层以后精二。",
+            "法术大师 仅使用法术伤害通过一个非一层关卡。",
+            "晕晕 使一名干员在单词作战中受到控制效果3次",
+            "和平共处： 阻挡一个使能够待命的萨卡兹敌人，并使其处于待命状态至少10秒。",
+            "我要鹿鹳 编队中同时携带埃拉菲亚和黎博利干员的情况下通关。"
+        ];
+
+        // 获取网格容器和按钮
+        const gridContainer = document.querySelector('.bingo-grid');
+        const shakeBtn = document.getElementById('shakeBtn');
+
+        // 生成随机不重复的25个词条
+        function getRandomWords() {
+            const words = [...wordBank]; // 复制词条库，避免修改原数组
+            const selectedWords = [];
+            
+            // 随机抽取25个不重复词条
+            for (let i = 0; i < 25; i++) {
+                const randomIndex = Math.floor(Math.random() * words.length);
+                selectedWords.push(words[randomIndex]);
+                words.splice(randomIndex, 1); // 移除已选中词条，确保不重复
+            }
+            
+            return selectedWords;
+        }
+
+        // 创建Bingo网格
+        function createBingoGrid() {
+            gridContainer.innerHTML = ''; // 清空现有网格
+            const words = getRandomWords(); // 获取随机词条
+            
+            // 生成25个格子
+            words.forEach((word) => {
+                const cell = document.createElement('div');
+                cell.className = 'bingo-cell';
+                cell.textContent = word;
+                
+                // 点击切换选中状态（变绿）
+                cell.addEventListener('click', () => {
+                    cell.classList.toggle('selected');
+                });
+                
+                gridContainer.appendChild(cell);
+            });
+        }
+
+        // 初始化游戏
+        createBingoGrid();
+
+        // 重摇按钮事件
+        shakeBtn.addEventListener('click', () => {
+            // 按钮动画反馈
+            shakeBtn.classList.add('animate-pulse');
+            setTimeout(() => {
+                shakeBtn.classList.remove('animate-pulse');
+                createBingoGrid(); // 重新生成网格
+            }, 500);
+        });
+    </script>
+</body>
+</html>
