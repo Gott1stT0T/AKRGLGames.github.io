@@ -17,6 +17,7 @@
                         secondary: '#36D399', // 绿色选中色
                         sarkaz: '#E53E3E', // 萨卡兹红色
                         garden: '#10B981', // 界园绿色
+                        divine: '#6366F1', // 神人肉鸽-靛蓝色
                         neutral: '#F5F7FA',
                         dark: '#1D2129',
                         accent: '#F59E0B' // 按钮高亮色
@@ -77,6 +78,9 @@
             .garden-bold {
                 @apply font-bold text-garden mb-1 w-full;
             }
+            .divine-bold {
+                @apply font-bold text-divine mb-1 w-full;
+            }
             .description-text {
                 @apply w-full text-sm;
             }
@@ -114,11 +118,15 @@
                 <i class="fa fa-leaf"></i>
                 <span>界园肉鸽</span>
             </button>
+            <button id="divineBtn" class="mode-btn">
+                <i class="fa fa-star"></i>
+                <span>神人肉鸽</span>
+            </button>
         </div>
     </div>
     
     <footer class="text-gray-500 text-sm mt-auto">
-        <p>萨卡兹肉鸽*101 + 界园肉鸽*101 | tips: 点击格子可标记完成状态</p>
+        <p>萨卡兹肉鸽*101 + 界园肉鸽*101 + 神人肉鸽*101 | tips: 点击格子可标记完成状态</p>
         <p>更新日志：游玩规则更新<p>
     </footer>
 
@@ -333,6 +341,117 @@
             
         ];
 
+        // 神人肉鸽词条库
+        const divineWordBank = [
+            "神之领域 累计招募5名六星干员并全部精二",
+            "人神共舞 场上同时存在神民和普通干员各5名以上",
+            "天命所归 一局游戏中累计获得10个神之藏品",
+            "凡人之躯 不携带任何六星干员通关五层作战",
+            "神罚降临 单次作战中打出50000以上的红字伤害",
+            "信仰之跃 仅使用远程干员通过一个紧急作战节点",
+            "神谕指引 一局游戏中累计使用10次占卜功能",
+            "人间烟火 在事件节点中选择所有与食物相关的选项",
+            "神装加身 一名干员同时装备3个专属藏品",
+            "人定胜天 在生命值低于10点时通关boss关",
+            "神魂颠倒 使5名干员同时处于眩晕状态并通关",
+            "人心所向 编队中所有干员均为同一阵营",
+            "神出鬼没 一局游戏中累计使用20次快速部署干员",
+            "人微言轻 仅使用三星及以下干员通过三层作战",
+            "神通广大 一名干员单次技能造成100000以上总伤害",
+            "人海战术 场上同时部署15名以上干员",
+            "神机妙算 提前5秒预判并部署干员阻挡精英敌人",
+            "人之常情 一局游戏中累计撤退干员50次以上",
+            "神罗天征 单次技能将10个以上敌人推离目标点",
+            "人各有志 编队中包含所有职业的干员",
+            "神圣守护 一名干员单次承受100000以上伤害仍存活",
+            "人情世故 在行商节点购买所有可用的藏品",
+            "神来之笔 最后1秒通关即将失守的关卡",
+            "人去楼空 通关时场上无任何干员存活",
+            "神工鬼斧 仅使用基建技能干员通过一层作战",
+            "神兵天降 3秒内部署5名以上干员并守住攻势",
+            "人非草木 不使用任何治疗干员通关五层作战",
+            "神鬼莫测 一局游戏中更换干员编队10次以上",
+            "人山人海 单次探索招募50名以上不同干员",
+            "神清气爽 思维负荷为0的情况下通关五层作战",
+            "人走茶凉 撤退所有干员后仅靠召唤物通关",
+            "神嚎鬼哭 单次作战中击杀100名以上敌人",
+            "人小鬼大 仅使用干员孑通关一个紧急作战",
+            "神龙摆尾 一名干员单次技能攻击20个以上敌人",
+            "人满为患 部署位达到上限后仍召唤10个以上召唤物",
+            "神闲气定 全程不手动操作通过四层作战",
+            "人琴俱亡 一局游戏中干员累计阵亡30次以上",
+            "神工天巧 仅使用限定干员通过所有关卡",
+            "人荒马乱 同时有10个以上敌人进入目标点仍通关",
+            "神枢鬼藏 隐藏所有干员在部署点后方仍通关",
+            "人仰马翻 所有干员同时被控制仍守住目标点",
+            "神焦鬼烂 单次作战中触发10次以上元素损伤",
+            "人弃我取 购买所有其他玩家放弃的藏品",
+            "神安气集 一局游戏中从未丢失任何目标生命值",
+            "人百其身 一名干员累计复活10次以上",
+            "神摇意夺 一局游戏中更换技能50次以上",
+            "人单势孤 仅使用一名干员通过二层作战",
+            "神谟远算 提前规划路线并一次通过所有节点",
+            "人强马壮 所有干员均达到满级且满信赖",
+            "神完气足 所有干员生命值和技力始终保持满值",
+            "人多势众 编队人数达到上限且全部部署上场",
+            "神州陆沉 允许50个以上敌人进入目标点仍通关",
+            "人琴两亡 同一干员连续阵亡5次仍继续使用",
+            "神飞色舞 一局游戏中获得1000以上源石锭",
+            "人定胜天 不使用任何藏品通关五层作战",
+            "神怒人怨 触发10次以上藏品负面效果仍通关",
+            "人急计生 在费用为0时部署干员阻挡精英敌人",
+            "神领意造 自创一套从未使用过的编队阵容通关",
+            "人莫予毒 一局游戏中从未受到任何伤害",
+            "神谋魔道 使用禁术类藏品通关所有关卡",
+            "人穷志短 一局游戏中源石锭从未超过10个",
+            "神头鬼脸 使用外观特殊的干员组成编队通关",
+            "人微权轻 不使用任何高级资深干员通关",
+            "神工妙力 仅使用精一干员通过四层作战",
+            "人多手杂 同时操作10名以上干员释放技能",
+            "神闲气定 全程一倍速通关所有关卡",
+            "人亡政息 更换指挥者后重新开始仍通关",
+            "神出鬼入 频繁更换干员部署位置迷惑敌人",
+            "人以群分 编队中仅使用同一种族干员通关",
+            "神嚎鬼哭 使敌人发出10种以上不同的音效",
+            "人同此心 所有干员朝向同一方向部署",
+            "神牵鬼制 被藏品效果限制仍通关五层作战",
+            "人欲横流 购买所有可用的干员和藏品",
+            "神施鬼设 利用地形优势无伤通关所有作战",
+            "人一己百 一名干员的输出占全队90%以上",
+            "神藏鬼伏 隐藏干员在死角仍能击杀所有敌人",
+            "人不聊生 目标生命值仅剩1点时通关boss关",
+            "神工鬼力 仅使用无精英化干员通过三层作战",
+            "人多阙少 部署位不足仍击败领袖敌人",
+            "神迷意夺 随机选择干员和技能仍通关作战",
+            "人人自危 所有干员生命值均低于10%仍通关",
+            "神枢鬼藏 利用藏品组合效果秒杀领袖敌人",
+            "人财两空 丢失所有源石锭和藏品仍通关",
+            "神经过敏 频繁点击干员和技能仍通关",
+            "人离乡贱 不使用任何限定干员通关",
+            "神荼郁垒 仅使用重装干员通过所有作战",
+            "人多智广 编队中包含所有职业分支的干员",
+            "神作鬼役 被敌方控制干员仍通关作战",
+            "人强不如命 完全随机选择作战路线仍通关",
+            "神魂颠倒 颠倒干员部署顺序仍通关",
+            "人取我与 与行商交换10次以上藏品",
+            "神不守舍 分心操作仍通关高难度作战",
+            "人来客往 频繁更换支援干员仍通关",
+            "神号鬼哭 使敌方发出最大音量的音效",
+            "人不犯我 不主动攻击仅靠防御通关作战",
+            "神工天巧 自定义藏品组合通关五层作战",
+            "人百其身 复活币使用次数达到上限仍通关",
+            "神出鬼没 利用快速复活干员游击作战",
+            "人地生疏 首次游玩该模式就通关五层",
+            "神工妙算 精准计算费用和技能时机通关",
+            "人多手乱 误操作释放技能仍通关作战",
+            "神聊海阔 边聊天边通关高难度关卡",
+            "人非圣贤 允许干员阵亡仍通关所有关卡",
+            "神来之笔 关键时刻释放技能拯救战局",
+            "人中之龙 一名干员单挑击败领袖敌人",
+            "神谟庙算 提前规划所有藏品和干员选择",
+            "人定胜天 在n20难度下通关所有作战节点"
+        ];
+
         // 当前激活的词条库和模式
         let currentWordBank = sarkazWordBank;
         let currentMode = 'sarkaz';
@@ -342,6 +461,7 @@
         const shakeBtn = document.getElementById('shakeBtn');
         const sarkazBtn = document.getElementById('sarkazBtn');
         const gardenBtn = document.getElementById('gardenBtn');
+        const divineBtn = document.getElementById('divineBtn');
 
         // 生成随机不重复的25个词条
         function getRandomWords() {
@@ -370,8 +490,13 @@
             const prefix = word.substring(0, firstSpaceIndex);
             const description = word.substring(firstSpaceIndex + 1); // 移除前面的空格
             
-            // 根据当前模式选择对应的样式（萨卡兹红色粗体 / 界园绿色粗体）
-            const boldClass = currentMode === 'sarkaz' ? 'sarkaz-bold' : 'garden-bold';
+            // 根据当前模式选择对应的样式（萨卡兹红色粗体 / 界园绿色粗体 / 神人靛蓝色粗体）
+            let boldClass = 'sarkaz-bold';
+            if (currentMode === 'garden') {
+                boldClass = 'garden-bold';
+            } else if (currentMode === 'divine') {
+                boldClass = 'divine-bold';
+            }
             
             // 返回格式化后的HTML，使用block布局让前缀在上，描述在下
             return `
@@ -399,18 +524,29 @@
             });
         }
 
-        // 切换词条库（萨卡兹/界园）
+        // 切换词条库（萨卡兹/界园/神人）
         function switchWordBank(bankType) {
             currentMode = bankType;
-            currentWordBank = bankType === 'sarkaz' ? sarkazWordBank : gardenWordBank;
+            // 更新当前词条库
+            if (bankType === 'sarkaz') {
+                currentWordBank = sarkazWordBank;
+            } else if (bankType === 'garden') {
+                currentWordBank = gardenWordBank;
+            } else if (bankType === 'divine') {
+                currentWordBank = divineWordBank;
+            }
             
             // 更新按钮状态
+            sarkazBtn.classList.remove('active');
+            gardenBtn.classList.remove('active');
+            divineBtn.classList.remove('active');
+            
             if (bankType === 'sarkaz') {
                 sarkazBtn.classList.add('active');
-                gardenBtn.classList.remove('active');
-            } else {
+            } else if (bankType === 'garden') {
                 gardenBtn.classList.add('active');
-                sarkazBtn.classList.remove('active');
+            } else if (bankType === 'divine') {
+                divineBtn.classList.add('active');
             }
             
             // 重新生成网格
@@ -435,6 +571,10 @@
 
         gardenBtn.addEventListener('click', () => {
             switchWordBank('garden');
+        });
+
+        divineBtn.addEventListener('click', () => {
+            switchWordBank('divine');
         });
     </script>
 </body>
