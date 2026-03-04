@@ -18,6 +18,7 @@
                         sarkaz: '#E53E3E', // 萨卡兹红色
                         garden: '#ff6bb3', // 界园粉色
                         divine: '#6366F1', // XX肉鸽-靛蓝色
+                        lock: '#EC4899', // 锁定按钮粉色
                         neutral: '#F5F7FA',
                         dark: '#1D2129',
                         accent: '#F59E0B' // 按钮高亮色
@@ -53,6 +54,9 @@
                        transition-all duration-300 transform hover:scale-105 active:scale-95
                        flex items-center gap-2 shadow-lg;
             }
+            .btn-shake:disabled {
+                @apply bg-gray-400 cursor-not-allowed hover:scale-100 active:scale-100;
+            }
             .mode-btn {
                 @apply bg-dark hover:bg-dark/80 text-white font-bold py-3 px-6 rounded-lg 
                        transition-all duration-300 transform hover:scale-105 active:scale-95
@@ -60,6 +64,14 @@
             }
             .mode-btn.active {
                 @apply bg-accent hover:bg-accent/90;
+            }
+            .lock-btn {
+                @apply bg-lock hover:bg-lock/90 text-white font-bold py-3 px-6 rounded-lg 
+                       transition-all duration-300 transform hover:scale-105 active:scale-95
+                       flex items-center gap-2 shadow-lg mt-2 md:mt-0;
+            }
+            .lock-btn.locked {
+                @apply bg-gray-600 hover:bg-gray-600/90;
             }
             .game-container {
                 @apply flex flex-col md:flex-row items-center justify-center gap-6;
@@ -101,12 +113,18 @@
             <!-- 格子将通过JavaScript动态生成 -->
         </div>
         
-        <!-- 按钮组（重摇+模式切换） -->
+        <!-- 按钮组（重摇+锁定+模式切换） -->
         <div class="button-group">
             <!-- 重摇按钮 -->
             <button id="shakeBtn" class="btn-shake">
                 <i class="fa fa-refresh"></i>
                 <span>ReRoll</span>
+            </button>
+            
+            <!-- 页面锁定按钮 -->
+            <button id="lockBtn" class="lock-btn">
+                <i class="fa fa-lock"></i>
+                <span>Lock</span>
             </button>
             
             <!-- 模式切换按钮 -->
@@ -127,7 +145,7 @@
     
     <footer class="text-gray-500 text-sm mt-auto">
         <p>萨卡兹肉鸽*101 + 界园肉鸽*126 | tips: 点击格子可标记完成状态</p>
-        <p>更新日志：26年暑期肉鸽_6更新框架预载与界园词库更新<p>
+        <p>更新日志：新增锁定页面防止误刷新，支持快捷刷Space/Enter刷新<p>
         <p>⚠️注意⚠️最新肉鸽_6为框架预载，所属内容均为AI编撰，请勿相信<p>
     </footer>
 
@@ -480,10 +498,13 @@
         // 当前激活的词条库和模式
         let currentWordBank = sarkazWordBank;
         let currentMode = 'sarkaz';
+        // 新增：锁定状态标识
+        let isLocked = false;
 
         // 获取DOM元素
         const gridContainer = document.querySelector('.bingo-grid');
         const shakeBtn = document.getElementById('shakeBtn');
+        const lockBtn = document.getElementById('lockBtn'); // 新增：获取锁定按钮
         const sarkazBtn = document.getElementById('sarkazBtn');
         const gardenBtn = document.getElementById('gardenBtn');
         const divineBtn = document.getElementById('divineBtn');
@@ -532,6 +553,9 @@
 
         // 创建Bingo网格
         function createBingoGrid() {
+            // 新增：如果锁定状态，不执行刷新
+            if (isLocked) return;
+            
             gridContainer.innerHTML = '';
             const words = getRandomWords();
             
@@ -551,6 +575,9 @@
 
         // 切换词条库（萨卡兹/界园/神人）
         function switchWordBank(bankType) {
+            // 新增：如果锁定状态，不执行切换
+            if (isLocked) return;
+            
             currentMode = bankType;
             // 更新当前词条库
             if (bankType === 'sarkaz') {
@@ -578,17 +605,40 @@
             createBingoGrid();
         }
 
+        // 新增：锁定/解锁功能
+        function toggleLock() {
+            isLocked = !isLocked;
+            
+            if (isLocked) {
+                // 锁定状态：禁用ReRoll按钮，更新锁定按钮样式和文字
+                shakeBtn.disabled = true;
+                lockBtn.classList.add('locked');
+                lockBtn.innerHTML = '<i class="fa fa-unlock"></i><span>页面解锁</span>';
+            } else {
+                // 解锁状态：启用ReRoll按钮，恢复锁定按钮样式和文字
+                shakeBtn.disabled = false;
+                lockBtn.classList.remove('locked');
+                lockBtn.innerHTML = '<i class="fa fa-lock"></i><span>页面锁定</span>';
+            }
+        }
+
         // 初始化游戏
         createBingoGrid();
 
         // 事件绑定
         shakeBtn.addEventListener('click', () => {
+            // 新增：锁定状态下不执行
+            if (isLocked) return;
+            
             shakeBtn.classList.add('animate-pulse');
             setTimeout(() => {
                 shakeBtn.classList.remove('animate-pulse');
                 createBingoGrid();
             }, 500);
         });
+
+        // 新增：绑定锁定按钮点击事件
+        lockBtn.addEventListener('click', toggleLock);
 
         sarkazBtn.addEventListener('click', () => {
             switchWordBank('sarkaz');
@@ -600,6 +650,15 @@
 
         divineBtn.addEventListener('click', () => {
             switchWordBank('divine');
+        });
+
+        // 新增：绑定键盘事件（Space/Enter触发ReRoll）
+        document.addEventListener('keydown', (e) => {
+            // 只响应Space(32)或Enter(13)键，且未锁定时触发
+            if ((e.keyCode === 32 || e.keyCode === 13) && !isLocked) {
+                e.preventDefault(); // 防止默认行为（如页面滚动）
+                shakeBtn.click(); // 模拟点击ReRoll按钮
+            }
         });
     </script>
 </body>
